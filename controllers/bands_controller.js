@@ -5,7 +5,7 @@ const {Op} = require('sequelize')
 // CONFIG
 const bands = express.Router()
 const db = require('../models')
-const {Band} = db
+const {Band, Meet_Greet, Event, Set_Time} = db
 
 // ROUTES
 bands.get('/', async (req, res) => {
@@ -22,10 +22,28 @@ bands.get('/', async (req, res) => {
     }
 })
 
-bands.get('/:id', async (req, res) => {
+bands.get('/:name', async (req, res) => {
+    console.log(req.query.event)
     try {
         const foundBand = await Band.findOne({
-            where: { band_id: req.params.id }
+            where: { name: req.params.name },
+            include: [{
+                model: Meet_Greet, 
+                as: "meet_greets",
+                include: {
+                    model: Event, 
+                    as: "event",
+                    where: {name: {[Op.like]: `%${req.query.event ? req.query.event : ''}%`}}
+                }
+            },{
+                model: Set_Time,
+                as: "set_times",
+                include: {
+                    model: Event, 
+                    as: "event",
+                    where: {name: {[Op.like]: `%${req.query.event ? req.query.event : ''}`}}
+                }
+            }]
         })
         res.status(200).json(foundBand)
     } catch (err) {
@@ -48,9 +66,7 @@ bands.post('/', async (req, res) => {
 bands.put('/:id', async (req, res) => {
     try {
         const updatedBands = await Band.update(req.body, {
-            where: {
-                band_id: req.params.id
-            }
+            where: {band_id: req.params.id}
         })
         res.status(200).json({
             message: `Successfully update ${updatedBands} band(s)`

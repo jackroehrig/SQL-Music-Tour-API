@@ -4,7 +4,7 @@ const express = require('express')
 // CONFIG
 const stages = express.Router()
 const db = require('../models')
-const {Stage} = db
+const {Stage, Event} = db
 
 // ROUTES
 stages.get('/', async (req, res) => {
@@ -19,7 +19,12 @@ stages.get('/', async (req, res) => {
 stages.get('/:id', async (req, res) => {
     try {
         const foundStage = await Stage.findOne({
-            where: { stage_id: req.params.id }
+            where: { stage_id: req.params.id },
+            include: {
+                model: Event,
+                as: 'events',
+                where: {stage_id: req.params.id}
+            }
         })
         res.status(200).json(foundStage)
     } catch (err) {
